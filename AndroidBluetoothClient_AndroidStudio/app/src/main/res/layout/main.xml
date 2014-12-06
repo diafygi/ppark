@@ -9,11 +9,29 @@
     android:layout_width="fill_parent"
     android:layout_height="wrap_content"
     android:gravity="center"
-    android:text="@string/label_signalName"
+    android:text="@string/label_signalName1"
     android:textSize="26sp" />
 
-<TextView android:textAppearance="?android:attr/textAppearanceLarge" android:layout_width="fill_parent" android:gravity="center" android:id="@+id/textView_signal" android:text="-" android:layout_height="wrap_content" android:textSize="80sp"></TextView>
-<LinearLayout android:layout_width="fill_parent" android:id="@+id/linearLayout2" android:orientation="vertical" android:layout_height="fill_parent">
+<TextView android:textAppearance="?android:attr/textAppearanceLarge" android:layout_width="fill_parent" android:gravity="center" android:id="@+id/textView_signal1" android:text="-" android:layout_height="wrap_content" android:textSize="80sp"></TextView>
+
+    <TextView
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:text="@string/label_signalName2"
+        android:textSize="26sp"
+        android:id="@+id/textView" />
+
+    <TextView
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:layout_width="fill_parent"
+        android:gravity="center"
+        android:id="@+id/textView_signal2"
+        android:text="-"
+        android:layout_height="wrap_content"
+        android:textSize="80sp" />
+
+    <LinearLayout android:layout_width="fill_parent" android:id="@+id/linearLayout2" android:orientation="vertical" android:layout_height="fill_parent">
     <LinearLayout android:layout_width="fill_parent" android:id="@+id/linearLayout1" android:orientation="horizontal" android:layout_height="fill_parent">
         <LinearLayout android:gravity="left" android:layout_width="0dp" android:id="@+id/linearLayout3" android:layout_weight="1" android:layout_height="fill_parent">
             <Button android:layout_height="wrap_content" android:id="@+id/button_connect" android:text="@string/button_connect" android:layout_width="wrap_content" android:layout_gravity="bottom"></Button>
@@ -25,5 +43,6 @@
             <Button android:layout_height="wrap_content" android:id="@+id/button_disconnect" android:text="@string/button_disconnect" android:layout_width="wrap_content" android:layout_gravity="bottom"></Button>
         </LinearLayout>
     </LinearLayout>
-</LinearLayout>
+
+    </LinearLayout>
 </LinearLayout>
