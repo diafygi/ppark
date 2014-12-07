@@ -4,7 +4,8 @@
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
     android:weightSum="1"
-    android:gravity="bottom">
+    android:gravity="bottom"
+    android:background="#ffffffff">
 
     <LinearLayout
         android:orientation="vertical"
@@ -20,16 +21,19 @@
             android:textAppearance="?android:attr/textAppearanceLarge"
             android:text="Large Text"
             android:id="@+id/top_content"
-            android:layout_weight="0.15"
+            android:layout_weight="0.10"
             android:gravity="center_vertical|center_horizontal"
-            android:textSize="50dip"
-            android:longClickable="false" />
+            android:textSize="30dip"
+            android:longClickable="false"
+            android:textColor="#ff3caa00"
+            android:freezesText="false"
+            android:keepScreenOn="false" />
 
         <ImageView
             android:layout_width="fill_parent"
             android:layout_height="0dip"
             android:id="@+id/imageView"
-            android:layout_weight="0.7" />
+            android:layout_weight="0.8" />
 
         <TextView
             android:layout_width="fill_parent"
@@ -38,8 +42,9 @@
             android:text="Large Text"
             android:id="@+id/bottom_content"
             android:gravity="center_vertical|center_horizontal"
-            android:layout_weight="0.15"
-            android:textSize="50dip" />
+            android:layout_weight="0.10"
+            android:textSize="30dip"
+            android:textColor="#ff3caa00" />
     </LinearLayout>
 
     <LinearLayout
@@ -57,7 +62,8 @@
             android:text="time"
             android:id="@+id/h1_time"
             android:textSize="15dip"
-            android:nestedScrollingEnabled="true" />
+            android:nestedScrollingEnabled="true"
+            android:textColor="#ff717171" />
 
         <TextView
             android:layout_width="60dp"
@@ -65,28 +71,32 @@
             android:text="steer"
             android:id="@+id/h1_steer"
             android:textSize="15dip"
-            android:phoneNumber="false" />
+            android:phoneNumber="false"
+            android:textColor="#ff717171" />
 
         <TextView
             android:layout_width="60dp"
             android:layout_height="fill_parent"
             android:text="speed"
             android:id="@+id/h1_speed"
-            android:textSize="15dip" />
+            android:textSize="15dip"
+            android:textColor="#ff717171" />
 
         <TextView
             android:layout_width="60dp"
             android:layout_height="fill_parent"
             android:text="accel"
             android:id="@+id/h1_accel"
-            android:textSize="15dip" />
+            android:textSize="15dip"
+            android:textColor="#ff717171" />
 
         <TextView
             android:layout_width="60dp"
             android:layout_height="fill_parent"
             android:text="gear"
             android:id="@+id/h1_gear"
-            android:textSize="15dip" />
+            android:textSize="15dip"
+            android:textColor="#ff717171" />
     </LinearLayout>
 
     <LinearLayout
@@ -103,35 +113,40 @@
             android:layout_height="fill_parent"
             android:text="-"
             android:id="@+id/timestamp"
-            android:textSize="12dip" />
+            android:textSize="12dip"
+            android:textColor="#ff6e6e6e" />
 
         <TextView
             android:layout_width="60dp"
             android:layout_height="fill_parent"
             android:text="-"
             android:id="@+id/steering"
-            android:textSize="12dip" />
+            android:textSize="12dip"
+            android:textColor="#ff6e6e6e" />
 
         <TextView
             android:layout_width="60dp"
             android:layout_height="fill_parent"
             android:text="-"
             android:id="@+id/speed"
-            android:textSize="12dip" />
+            android:textSize="12dip"
+            android:textColor="#ff6e6e6e" />
 
         <TextView
             android:layout_width="60dp"
             android:layout_height="fill_parent"
             android:text="-"
             android:id="@+id/acceleration"
-            android:textSize="12dip" />
+            android:textSize="12dip"
+            android:textColor="#ff6e6e6e" />
 
         <TextView
             android:layout_width="60dp"
             android:layout_height="fill_parent"
             android:text="-"
             android:id="@+id/gear"
-            android:textSize="12dip" />
+            android:textSize="12dip"
+            android:textColor="#ff6e6e6e" />
 
     </LinearLayout>
 

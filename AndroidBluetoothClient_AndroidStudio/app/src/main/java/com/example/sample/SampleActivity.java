@@ -11,6 +11,8 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.media.AudioManager;
+import android.media.SoundPool;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -18,6 +20,8 @@ import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -26,11 +30,33 @@ public class SampleActivity extends Activity implements ICommNotify{
 	private Button _btnConnect;
 	private Button _btnDisconnect;
 	private Button _btnSelectDevice;
+    private Button _btnStartOver;
     private TextView _tvTimestamp;
 	private TextView _tvSteering;
     private TextView _tvSpeed;
     private TextView _tvAcceleration;
     private TextView _tvGear;
+
+    private LinearLayout _llContent;
+    private TextView _tvContentTop;
+    private ImageView _ivContent;
+    private TextView _tvContentBottom;
+
+    private SoundPool soundPool;
+    private int soundStopId;
+    private int soundStraightForwardId;
+    private int soundStraightReverseId;
+    private int soundRightForwardId;
+    private int soundRightReverseId;
+    private int soundLeftForwardId;
+    private int soundLeftReverseId;
+
+    boolean first_tap = false;
+    boolean second_tap = false;
+    int x1 = 0;
+    int y1 = 0;
+    int x2 = 0;
+    int y2 = 0;
 
 	/* declaration of Communication class */
 	private Communication _comm;
@@ -50,6 +76,8 @@ public class SampleActivity extends Activity implements ICommNotify{
     private final int ACCELERATION_ID = 0x0E;
     private final int GEAR_ID = 0x07;
 	private ByteBuffer _buf = null;
+    private static final int MAX_SOUND_POOL_STREAMS = 7;
+    private static final int NORMAL_PRIORITY = 10;
 	
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -66,56 +94,122 @@ public class SampleActivity extends Activity implements ICommNotify{
         _tvSpeed = (TextView)findViewById(R.id.speed);
         _tvAcceleration = (TextView)findViewById(R.id.acceleration);
         _tvGear = (TextView)findViewById(R.id.gear);
+
         _btnConnect = (Button)findViewById(R.id.button_connect);
         _btnDisconnect = (Button)findViewById(R.id.button_disconnect);
         _btnSelectDevice = (Button)findViewById(R.id.button_select);
+        _btnStartOver = (Button)findViewById(R.id.button_startover);
         _btnConnect.setOnClickListener(_onClickListener);
         _btnDisconnect.setOnClickListener(_onClickListener);
         _btnSelectDevice.setOnClickListener(_onClickListener);
+        _btnStartOver.setOnClickListener(_onClickListener);
+
+        _llContent = (LinearLayout)findViewById(R.id.content);
+        _llContent.setOnClickListener(_onContentListener);
+
+        _tvContentTop = (TextView)findViewById(R.id.top_content);
+        _ivContent = (ImageView)findViewById(R.id.imageView);
+        _tvContentBottom = (TextView)findViewById(R.id.bottom_content);
+
+        this.soundPool = new SoundPool(MAX_SOUND_POOL_STREAMS, AudioManager.STREAM_MUSIC, 100);
+        this.soundStopId = this.soundPool.load(this.getApplicationContext(), R.raw.stop, 1);
+        this.soundStraightForwardId = this.soundPool.load(this.getApplicationContext(), R.raw.straight_forward, 1);
+        this.soundStraightReverseId = this.soundPool.load(this.getApplicationContext(), R.raw.straight_reverse, 1);
+        this.soundRightForwardId = this.soundPool.load(this.getApplicationContext(), R.raw.right_forward, 1);
+        this.soundRightReverseId = this.soundPool.load(this.getApplicationContext(), R.raw.right_reverse, 1);
+        this.soundLeftForwardId = this.soundPool.load(this.getApplicationContext(), R.raw.left_forward, 1);
+        this.soundLeftReverseId = this.soundPool.load(this.getApplicationContext(), R.raw.left_reverse, 1);
+
+        updateView();
     }
 
-	@Override
+    @Override
 	public void onDestroy() {
 		super.onDestroy();
 	}
 	
 	@Override
 	public void finish() {
-		stopTimer();
+        stopTimer();
         /* Set the Notification interface */
         _comm.setICommNotify(null);
 		/* Close the session */
-		_comm.closeSession();
+        _comm.closeSession();
 
-		super.finish();
-	}	
-    
-	OnClickListener _onClickListener = new OnClickListener(){
+        super.finish();
+    }
+
+    public void updateView() {
+        //first tap screen
+        if((!first_tap) && (!second_tap)){
+            _tvContentTop.setText("Tap When");
+            _tvContentBottom.setText("At First Bumper");
+            _ivContent.setImageResource(R.drawable.first_tap);
+        }
+        //second tap screen
+        else if((first_tap) && (!second_tap)){
+            _tvContentTop.setText("Tap Again When");
+            _tvContentBottom.setText("At Second Bumper");
+            _ivContent.setImageResource(R.drawable.second_tap);
+        }
+        //determine space
+        else{
+            _tvContentTop.setText("Default");
+            _tvContentBottom.setText("Screen");
+            _ivContent.setImageResource(R.drawable.ok);
+            this.soundPool.play(this.soundStopId, 1, 1, NORMAL_PRIORITY, 0, 1);
+        }
+    }
+
+    OnClickListener _onClickListener = new OnClickListener(){
 		@Override
 		public void onClick(View v) {
-			Button btn = (Button)v;
-			if (btn == _btnConnect){
-				if (_comm.isCommunication()){
-					return;
-				}
+            Button btn = (Button) v;
+            if (btn == _btnConnect) {
+                if (_comm.isCommunication()) {
+                    return;
+                }
 				/* Open the session */
-				if (!_comm.openSession(_strDevAddress)){
-					showAlertDialog("OpenSession Failed");
-				};
-			}else if(btn == _btnDisconnect){	
-				stopTimer();
+                if (!_comm.openSession(_strDevAddress)) {
+                    showAlertDialog("OpenSession Failed");
+                }
+                ;
+            } else if (btn == _btnDisconnect) {
+                stopTimer();
 				/* Close the session */
-				_comm.closeSession();
-			}else if(btn == _btnSelectDevice){	
-				Intent intent = new Intent(SampleActivity.this,DeviceListActivity.class);
-				startActivityForResult(intent, REQUEST_BTDEVICE_SELECT);
-			}
-		}
+                _comm.closeSession();
+            } else if (btn == _btnSelectDevice) {
+                Intent intent = new Intent(SampleActivity.this, DeviceListActivity.class);
+                startActivityForResult(intent, REQUEST_BTDEVICE_SELECT);
+            } else if (btn == _btnStartOver) {
+                first_tap = false;
+                second_tap = false;
+                updateView();
+            }
+        }
 	};
 
-	@Override
+    OnClickListener _onContentListener = new OnClickListener(){
+        @Override
+        public void onClick(View v) {
+            LinearLayout ll = (LinearLayout)v;
+            if (ll == _llContent){
+                if(!first_tap){
+                    first_tap = true;
+                    updateView();
+                }
+                else if(!second_tap){
+                    second_tap = true;
+                    updateView();
+                }
+            }
+        }
+    };
+
+
+    @Override
 	public void notifyReceiveData(Object data) {
-		Log.d(_tag,String.format("RECEIVE"));
+		//Log.d(_tag,String.format("RECEIVE"));
 		ByteBuffer rcvData = (ByteBuffer)data;
 
 		/* Combine received messages */
