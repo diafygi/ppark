@@ -26,10 +26,11 @@ public class SampleActivity extends Activity implements ICommNotify{
 	private Button _btnConnect;
 	private Button _btnDisconnect;
 	private Button _btnSelectDevice;
-	private TextView _tvDataLabel1;
-    private TextView _tvDataLabel2;
-    private String strData1 = "";
-    private String strData2 = "";
+    private TextView _tvTimestamp;
+	private TextView _tvSteering;
+    private TextView _tvSpeed;
+    private TextView _tvAcceleration;
+    private TextView _tvGear;
 
 	/* declaration of Communication class */
 	private Communication _comm;
@@ -43,9 +44,11 @@ public class SampleActivity extends Activity implements ICommNotify{
 	private final String _tag = "SampleActivity";
 	/* interval for sending vehicle signal request (milliseconds) */
 	private final int TIMER_INTERVAL = 100;
-	private final int STEERING_WHEEL_ANGLE_ID = 0x08;
+    private final int TIMESTAMP_ID = 0x01;
+    private final int STEERING_WHEEL_ANGLE_ID = 0x08;
     private final int VEHICLE_SPEED_ID = 0x0D;
-    private int last_id = 0x08;
+    private final int ACCELERATION_ID = 0x0E;
+    private final int GEAR_ID = 0x07;
 	private ByteBuffer _buf = null;
 	
     @Override
@@ -58,8 +61,11 @@ public class SampleActivity extends Activity implements ICommNotify{
         /* Set the Notification interface */
         _comm.setICommNotify(this);
 
-        _tvDataLabel1 = (TextView)findViewById(R.id.textView_signal1);
-        _tvDataLabel2 = (TextView)findViewById(R.id.textView_signal2);
+        _tvTimestamp = (TextView)findViewById(R.id.timestamp);
+        _tvSteering = (TextView)findViewById(R.id.steering);
+        _tvSpeed = (TextView)findViewById(R.id.speed);
+        _tvAcceleration = (TextView)findViewById(R.id.acceleration);
+        _tvGear = (TextView)findViewById(R.id.gear);
         _btnConnect = (Button)findViewById(R.id.button_connect);
         _btnDisconnect = (Button)findViewById(R.id.button_disconnect);
         _btnSelectDevice = (Button)findViewById(R.id.button_select);
@@ -142,30 +148,43 @@ public class SampleActivity extends Activity implements ICommNotify{
 			/* Number of signals */
 			int dataCount = (int)tmps[4] & 0xff;
 			int index = 5;
+            String strTimestamp = "";
+            String strSteering = "";
+            String strSpeed = "";
+            String strAcceleration = "";
+            String strGear = "";
 			/* Vehicle signal */
 			for (int i = 0 ; i < dataCount ; i++){
 				int tmpData = toUint16Value(tmps, index);
 				long value   = toUint32Value(tmps, index + 2); 
 				int signalID = (tmpData & 0x0fff);
 				int stat 	 = ((tmpData >> 12) & 0x0f);
-				if (STEERING_WHEEL_ANGLE_ID == signalID){
+                if (TIMESTAMP_ID == signalID){
+                    strTimestamp = String.valueOf(value);
+                }
+				else if (STEERING_WHEEL_ANGLE_ID == signalID){
 					value = value & 0x00000FFF;
-					value = (value + 2048) & 0x00000FFF;
-					strData1 = String.valueOf(value);
+                    value = ((value + 2048) & 0x00000FFF) - 2048;
+                    strSteering = String.valueOf(value);
 				}
                 else if(VEHICLE_SPEED_ID == signalID){
                     value = value & 0x000001FF;
-                    strData2 = String.valueOf(value);
+                    strSpeed = String.valueOf(value);
                 }
-				Log.d(_tag,String.format("SIGNALID = %d, SIGNALSTAT = %d, VALUE = %d", signalID,stat,value));
+                else if(ACCELERATION_ID == signalID){
+                    value = value & 0x000007FF;
+                    value = -1 * (((value + 1024) & 0x000007FF) - 1024);
+                    strAcceleration = String.valueOf(value);
+                }
+                else if(GEAR_ID == signalID){
+                    value = value & 0x0000000F;
+                    strGear = String.valueOf(value);
+                }
+				//Log.d(_tag,String.format("SIGNALID = %d, SIGNALSTAT = %d, VALUE = %d", signalID,stat,value));
 				index += 6;
 			}
-			if (strData1.length() > 0){
-				updateContetnts1(strData1);
-			}
-            if (strData2.length() > 0){
-                updateContetnts2(strData2);
-            }
+
+            updateContetnts(strTimestamp, strSteering, strSpeed, strAcceleration, strGear);
 		}else{
 			Log.d(_tag,"UNKNOWN FRAME");
 		}
@@ -226,34 +245,44 @@ public class SampleActivity extends Activity implements ICommNotify{
 		}
 	}	
 	
-	private void updateContetnts1(final String strData){
+	private void updateContetnts(final String strTimestamp,
+                                 final String strSteering,
+                                 final String strSpeed,
+                                 final String strAcceleration,
+                                 final String strGear){
 		_handler.post(new Runnable(){
 			@Override
 			public void run() {
-				_tvDataLabel1.setText(strData);
+                _tvTimestamp.setText(strTimestamp);
+				_tvSteering.setText(strSteering);
+                _tvSpeed.setText(strSpeed);
+                _tvAcceleration.setText(strAcceleration);
+                _tvGear.setText(strGear);
 			}
 		});
 	}
 
-    private void updateContetnts2(final String strData){
-        _handler.post(new Runnable(){
-            @Override
-            public void run() {
-                _tvDataLabel2.setText(strData);
-            }
-        });
-    }
-	
 	/* Create the message of vehicle signal request */
-	private ByteBuffer createCarInfoGetFrame(int device_id){
+	private ByteBuffer createCarInfoGetFrame(){
 		/* e.g.) request of Engine Revolution Speed */
-		byte[] buf = {0x7e,0x00,0x00,0x01,0x01,0x00,0x00,0x00,0x00,0x7f};
+		byte[] buf = {
+            0x7e,      //packet start
+            0x00,0x0c, //size (12 bytes)
+            0x01,      //type
+            0x05,      //number of signal ids
+            0x00,0x01, //timestamp
+            0x00,0x08, //steering wheel angle
+            0x00,0x0d, //vehicle speed
+            0x00,0x0e, //acceleration front-back
+            0x00,0x07, //transmission gear
+            0x00,0x00, //checksum
+            0x7f};     //packet end
 		int length = buf.length;
 		/* Set the message length */
-		buf[1] = (byte)(((length - 6) >> 8) & 0xff);
-		buf[2] = (byte)((length - 6) & 0xff);
+		//buf[1] = (byte)(((length - 6) >> 8) & 0xff);
+		//buf[2] = (byte)((length - 6) & 0xff);
 		/* Set the request signal ID */
-		buf[6] = (byte)(device_id);
+		//buf[6] = (byte)(device_id);
 		/* Calculate and set the CRC */
 		int crc = calcCRC(buf, 1, buf.length - 4);
 		/* Convert endian from little to big */
@@ -268,14 +297,7 @@ public class SampleActivity extends Activity implements ICommNotify{
 		_timerTask = new TimerTask() {
 			public void run(){
 				/* Send the message of vehicle signal request */
-                if(last_id == STEERING_WHEEL_ANGLE_ID){
-                    last_id = VEHICLE_SPEED_ID;
-                    _comm.writeData(createCarInfoGetFrame(VEHICLE_SPEED_ID));
-                }
-                else{
-                    last_id = STEERING_WHEEL_ANGLE_ID;
-                    _comm.writeData(createCarInfoGetFrame(STEERING_WHEEL_ANGLE_ID));
-                }
+                _comm.writeData(createCarInfoGetFrame());
 			}
 		};
 		_timer.schedule(_timerTask,0,timerCount);
