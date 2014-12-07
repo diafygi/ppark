@@ -1,7 +1,9 @@
-Class ParkingException extends Exception {
-    public PArkingException() {}
 
-    public ParkingException (string msg) {
+
+class ParkingException extends Exception {
+    public ParkingException() {}
+
+    public ParkingException (String msg) {
 	super (msg);
    }
 }
