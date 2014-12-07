@@ -53,6 +53,7 @@ public class SampleActivity extends Activity implements ICommNotify{
     private int soundLeftReverseId;
 
     private int stage = 0;
+    private long last_ts = 0;
     private double spaceSize = 0.0;
     private double arcDist = 0.0;
     private double offsetDist = 0.0;
@@ -129,7 +130,7 @@ public class SampleActivity extends Activity implements ICommNotify{
         this.soundLeftForwardId = this.soundPool.load(this.getApplicationContext(), R.raw.left_forward, 1);
         this.soundLeftReverseId = this.soundPool.load(this.getApplicationContext(), R.raw.left_reverse, 1);
 
-        updateView();
+        updateView(0);
     }
 
     @Override
@@ -148,7 +149,7 @@ public class SampleActivity extends Activity implements ICommNotify{
         super.finish();
     }
 
-    public void updateView() {
+    private void updateView(int content_id) {
         //first tap screen
         if(stage == 0){
             _tvContentTop.setText("Tap When");
@@ -161,12 +162,53 @@ public class SampleActivity extends Activity implements ICommNotify{
             _tvContentBottom.setText("At Second Bumper");
             _ivContent.setImageResource(R.drawable.second_tap);
         }
-        //determine space
-        else{
-            _tvContentTop.setText("Default");
-            _tvContentBottom.setText("Screen");
+        //content screens
+        else if(content_id == 1){
+            _tvContentTop.setText("Straight");
+            _tvContentBottom.setText("Forward");
+            _ivContent.setImageResource(R.drawable.straight_forward);
+            this.soundPool.play(this.soundStraightForwardId, 1, 1, NORMAL_PRIORITY, 0, 1);
+        }
+        else if(content_id == 2){
+            _tvContentTop.setText("Straight");
+            _tvContentBottom.setText("Reverse");
+            _ivContent.setImageResource(R.drawable.straight_reverse);
+            this.soundPool.play(this.soundStraightReverseId, 1, 1, NORMAL_PRIORITY, 0, 1);
+        }
+        else if(content_id == 3){
+            _tvContentTop.setText("Hard Right");
+            _tvContentBottom.setText("Forward");
+            _ivContent.setImageResource(R.drawable.right_forward);
+            this.soundPool.play(this.soundRightForwardId, 1, 1, NORMAL_PRIORITY, 0, 1);
+        }
+        else if(content_id == 4){
+            _tvContentTop.setText("Hard Right");
+            _tvContentBottom.setText("Reverse");
+            _ivContent.setImageResource(R.drawable.right_reverse);
+            this.soundPool.play(this.soundRightReverseId, 1, 1, NORMAL_PRIORITY, 0, 1);
+        }
+        else if(content_id == 5){
+            _tvContentTop.setText("Hard Left");
+            _tvContentBottom.setText("Forward");
+            _ivContent.setImageResource(R.drawable.left_forward);
+            this.soundPool.play(this.soundLeftForwardId, 1, 1, NORMAL_PRIORITY, 0, 1);
+        }
+        else if(content_id == 6){
+            _tvContentTop.setText("Hard Left");
+            _tvContentBottom.setText("Reverse");
+            _ivContent.setImageResource(R.drawable.left_reverse);
+            this.soundPool.play(this.soundLeftReverseId, 1, 1, NORMAL_PRIORITY, 0, 1);
+        }
+        else if(content_id == 7){
+            _tvContentTop.setText("Stop");
+            _tvContentBottom.setText("");
+            _ivContent.setImageResource(R.drawable.stop);
+            this.soundPool.play(this.soundStopId, 1, 1, NORMAL_PRIORITY, 0, 1);
+        }
+        else if(content_id == 8){
+            _tvContentTop.setText("Parked");
+            _tvContentBottom.setText("");
             _ivContent.setImageResource(R.drawable.ok);
-            //this.soundPool.play(this.soundStopId, 1, 1, NORMAL_PRIORITY, 0, 1);
         }
     }
 
@@ -191,7 +233,7 @@ public class SampleActivity extends Activity implements ICommNotify{
                 startActivityForResult(intent, REQUEST_BTDEVICE_SELECT);
             } else if (btn == _btnStartOver) {
                 stage = 0;
-                updateView();
+                updateView(0);
             }
         }
 	};
@@ -205,7 +247,7 @@ public class SampleActivity extends Activity implements ICommNotify{
                 if(stage == 0){
                     stage = 1;
                     spaceSize = 0.0;
-                    updateView();
+                    updateView(0);
                 }
                 //second tap
                 else if(stage == 1){
@@ -222,55 +264,55 @@ public class SampleActivity extends Activity implements ICommNotify{
         }
     };
 
-    private int monitor (int steeringWheelAngle,
-                        int velocity,
-                        int acceleration,
-                        int gear,
-                        int deltaT) {
+    private int monitor (long steeringWheelAngle,
+                         long velocity,
+                         long acceleration,
+                         long gear,
+                         long deltaT) {
         switch(stage) {
             case 1: return measure(velocity, acceleration, gear, deltaT);
             case 2: return align(velocity, acceleration, gear, deltaT);
             case 3: return rightLock(steeringWheelAngle, velocity, acceleration, gear, deltaT);
             case 4: return leftLock(steeringWheelAngle, velocity, acceleration, gear, deltaT);
             default: stage = 0;
-                return 7;
+                return 7;//stop
         }
     }
 
-    private int measure(int velocity, int acceleration, int gear,int deltaT ){
+    private int measure(long velocity, long acceleration, long gear,long deltaT ){
         spaceSize += (12 == gear)? -(velocity*deltaT*0.001+ 0.5*acceleration*deltaT*deltaT*0.0000001) : velocity*deltaT*0.001+ 0.5*acceleration*deltaT*deltaT*0.0000001;
-        return 1;
+        return 1;//straight forward
     }
 
-    private int align (int velocity, int acceleration, int gear, int deltaT){
+    private int align (long velocity, long acceleration, long gear, long deltaT){
         offsetDist += (12 == gear)? -(velocity*deltaT*0.001+ 0.5*acceleration*deltaT*deltaT*0.0000001) : velocity*deltaT*0.001+ 0.5*acceleration*deltaT*deltaT*0.0000001;
         if (alignDist < offsetDist)
-            return 1;
+            return 1;//straight forward
 
         if (alignDist > offsetDist){
             offsetDist = 0.0;
             stage = 3;
-            return 4;
+            return 4;//hard right reverse
         }
-        return 1;
+        return 7;//stop
     }
 
-    private int rightLock(int steeringAngle, int velocity, int acceleration, int gear, int deltaT){
+    private int rightLock(long steeringAngle, long velocity, long acceleration, long gear, long deltaT){
         arcDist += (12 == gear)? -(velocity*deltaT*0.001+ 0.5*acceleration*deltaT*deltaT*0.0000001) : velocity*deltaT*0.001+ 0.5*acceleration*deltaT*deltaT*0.0000001;
         if (turnCircum < arcDist)
-            return 4;
+            return 4;//hard right reverse
 
         stage = 4;
-        return 6;
+        return 6;//hard left reverse
     }
 
-    private int leftLock(int steeringAngle, int velocity, int acceleration, int gear, int deltaT){
+    private int leftLock(long steeringAngle, long velocity, long acceleration, long gear, long deltaT){
         arcDist += (12 == gear)? (velocity*deltaT*0.001+ 0.5*acceleration*deltaT*deltaT*0.0000001) : -velocity*deltaT*0.001+ 0.5*acceleration*deltaT*deltaT*0.0000001;
         if (arcDist > 0 )
-            return 6;
+            return 6;//hard left reverse
 
         stage = 5;
-        return 8;
+        return 8;//ok
     }
 
     @Override
@@ -308,6 +350,11 @@ public class SampleActivity extends Activity implements ICommNotify{
 			/* Number of signals */
 			int dataCount = (int)tmps[4] & 0xff;
 			int index = 5;
+            long intTimestamp = 0;
+            long intSteering = 0;
+            long intSpeed = 0;
+            long intAcceleration = 0;
+            long intGear = 0;
             String strTimestamp = "";
             String strSteering = "";
             String strSpeed = "";
@@ -320,31 +367,38 @@ public class SampleActivity extends Activity implements ICommNotify{
 				int signalID = (tmpData & 0x0fff);
 				int stat 	 = ((tmpData >> 12) & 0x0f);
                 if (TIMESTAMP_ID == signalID){
-                    strTimestamp = String.valueOf(value);
+                    intTimestamp = value;
+                    strTimestamp = String.valueOf(intTimestamp);
                 }
 				else if (STEERING_WHEEL_ANGLE_ID == signalID){
 					value = value & 0x00000FFF;
                     value = ((value + 2048) & 0x00000FFF) - 2048;
-                    strSteering = String.valueOf(value);
+                    intSteering = value;
+                    strSteering = String.valueOf(intSteering);
 				}
                 else if(VEHICLE_SPEED_ID == signalID){
                     value = value & 0x000001FF;
-                    strSpeed = String.valueOf(value);
+                    intSpeed = value;
+                    strSpeed = String.valueOf(intSpeed);
                 }
                 else if(ACCELERATION_ID == signalID){
                     value = value & 0x000007FF;
                     value = -1 * (((value + 1024) & 0x000007FF) - 1024);
-                    strAcceleration = String.valueOf(value);
+                    intAcceleration = value;
+                    strAcceleration = String.valueOf(intAcceleration);
                 }
                 else if(GEAR_ID == signalID){
                     value = value & 0x0000000F;
-                    strGear = String.valueOf(value);
+                    intGear = value;
+                    strGear = String.valueOf(intGear);
                 }
 				//Log.d(_tag,String.format("SIGNALID = %d, SIGNALSTAT = %d, VALUE = %d", signalID,stat,value));
 				index += 6;
 			}
 
-            updateContetnts(strTimestamp, strSteering, strSpeed, strAcceleration, strGear);
+            updateContents(
+                    intTimestamp, intSteering, intSpeed, intAcceleration, intGear,
+                    strTimestamp, strSteering, strSpeed, strAcceleration, strGear);
 		}else{
 			Log.d(_tag,"UNKNOWN FRAME");
 		}
@@ -405,11 +459,16 @@ public class SampleActivity extends Activity implements ICommNotify{
 		}
 	}	
 	
-	private void updateContetnts(final String strTimestamp,
-                                 final String strSteering,
-                                 final String strSpeed,
-                                 final String strAcceleration,
-                                 final String strGear){
+	private void updateContents(final long intTimestamp,
+                                final long intSteering,
+                                final long intSpeed,
+                                final long intAcceleration,
+                                final long intGear,
+                                final String strTimestamp,
+                                final String strSteering,
+                                final String strSpeed,
+                                final String strAcceleration,
+                                final String strGear){
 		_handler.post(new Runnable(){
 			@Override
 			public void run() {
@@ -418,6 +477,14 @@ public class SampleActivity extends Activity implements ICommNotify{
                 _tvSpeed.setText(strSpeed);
                 _tvAcceleration.setText(strAcceleration);
                 _tvGear.setText(strGear);
+
+                //update view
+                long t_delta = intTimestamp - last_ts;
+                last_ts = intTimestamp;
+                if(stage > 0) {
+                    int result = monitor(intSteering, intSpeed, intAcceleration, intGear, t_delta);
+                    updateView(result);
+                }
 			}
 		});
 	}
