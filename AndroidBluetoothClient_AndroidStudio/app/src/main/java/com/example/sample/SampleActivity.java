@@ -59,7 +59,7 @@ public class SampleActivity extends Activity implements ICommNotify{
     private double arcDist = 0.0;
     private double offsetDist = 0.0;
 
-    /* defaults are scion FR-S */
+    /* defaults are scion FR-S dimensions (in meters) */
     private final double carLength = 4.27;
     private final double wheelBase= 2.58;
     private final double turningCircle = 5.4;
@@ -281,12 +281,12 @@ public class SampleActivity extends Activity implements ICommNotify{
     }
 
     private int measure(long velocity, long acceleration, long gear,long deltaT ){
-        spaceSize += (12 == gear)? -(velocity*deltaT*0.001+ 0.5*acceleration*deltaT*deltaT*0.0000001) : velocity*deltaT*0.001+ 0.5*acceleration*deltaT*deltaT*0.0000001;
+        spaceSize += (12 == gear)? -(velocity*deltaT*0.001/3.6+ 0.5*acceleration*deltaT*deltaT*0.0000001) : velocity*deltaT*0.001/3.6+ 0.5*acceleration*deltaT*deltaT*0.0000001;
         return 1;//straight forward
     }
 
     private int align (long velocity, long acceleration, long gear, long deltaT){
-        offsetDist += (12 == gear)? -(velocity*deltaT*0.001+ 0.5*acceleration*deltaT*deltaT*0.0000001) : velocity*deltaT*0.001+ 0.5*acceleration*deltaT*deltaT*0.0000001;
+        offsetDist += (12 == gear)? -(velocity*deltaT*0.001/3.6+ 0.5*acceleration*deltaT*deltaT*0.0000001) : velocity*deltaT*0.001/3.6+ 0.5*acceleration*deltaT*deltaT*0.0000001;
         if (alignDist < offsetDist)
             return 1;//straight forward
 
@@ -299,7 +299,7 @@ public class SampleActivity extends Activity implements ICommNotify{
     }
 
     private int rightLock(long steeringAngle, long velocity, long acceleration, long gear, long deltaT){
-        arcDist += (12 == gear)? -(velocity*deltaT*0.001+ 0.5*acceleration*deltaT*deltaT*0.0000001) : velocity*deltaT*0.001+ 0.5*acceleration*deltaT*deltaT*0.0000001;
+        arcDist += (12 == gear)? -(velocity*deltaT*0.001/3.6 + 0.5*acceleration*deltaT*deltaT*0.0000001) : velocity*deltaT*0.001/3.6 + 0.5*acceleration*deltaT*deltaT*0.0000001;
         if (turnCircum < arcDist)
             return 4;//hard right reverse
 
@@ -308,7 +308,7 @@ public class SampleActivity extends Activity implements ICommNotify{
     }
 
     private int leftLock(long steeringAngle, long velocity, long acceleration, long gear, long deltaT){
-        arcDist += (12 == gear)? (velocity*deltaT*0.001+ 0.5*acceleration*deltaT*deltaT*0.0000001) : -velocity*deltaT*0.001+ 0.5*acceleration*deltaT*deltaT*0.0000001;
+        arcDist += (12 == gear)? (velocity*deltaT*0.001/3.6 + 0.5*acceleration*deltaT*deltaT*0.0000001) : -velocity*deltaT*0.001/3.6+ 0.5*acceleration*deltaT*deltaT*0.0000001;
         if (arcDist > 0 )
             return 6;//hard left reverse
 
