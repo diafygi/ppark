@@ -53,6 +53,7 @@ public class SampleActivity extends Activity implements ICommNotify{
     private int soundLeftReverseId;
 
     private int stage = 0;
+    private int last_content = 0;
     private long last_ts = 0;
     private double spaceSize = 0.0;
     private double arcDist = 0.0;
@@ -167,43 +168,43 @@ public class SampleActivity extends Activity implements ICommNotify{
             _tvContentTop.setText("Straight");
             _tvContentBottom.setText("Forward");
             _ivContent.setImageResource(R.drawable.straight_forward);
-            this.soundPool.play(this.soundStraightForwardId, 1, 1, NORMAL_PRIORITY, 0, 1);
+            //this.soundPool.play(this.soundStraightForwardId, 1, 1, NORMAL_PRIORITY, 0, 1);
         }
         else if(content_id == 2){
             _tvContentTop.setText("Straight");
             _tvContentBottom.setText("Reverse");
             _ivContent.setImageResource(R.drawable.straight_reverse);
-            this.soundPool.play(this.soundStraightReverseId, 1, 1, NORMAL_PRIORITY, 0, 1);
+            //this.soundPool.play(this.soundStraightReverseId, 1, 1, NORMAL_PRIORITY, 0, 1);
         }
         else if(content_id == 3){
             _tvContentTop.setText("Hard Right");
             _tvContentBottom.setText("Forward");
             _ivContent.setImageResource(R.drawable.right_forward);
-            this.soundPool.play(this.soundRightForwardId, 1, 1, NORMAL_PRIORITY, 0, 1);
+            //this.soundPool.play(this.soundRightForwardId, 1, 1, NORMAL_PRIORITY, 0, 1);
         }
         else if(content_id == 4){
             _tvContentTop.setText("Hard Right");
             _tvContentBottom.setText("Reverse");
             _ivContent.setImageResource(R.drawable.right_reverse);
-            this.soundPool.play(this.soundRightReverseId, 1, 1, NORMAL_PRIORITY, 0, 1);
+            //this.soundPool.play(this.soundRightReverseId, 1, 1, NORMAL_PRIORITY, 0, 1);
         }
         else if(content_id == 5){
             _tvContentTop.setText("Hard Left");
             _tvContentBottom.setText("Forward");
             _ivContent.setImageResource(R.drawable.left_forward);
-            this.soundPool.play(this.soundLeftForwardId, 1, 1, NORMAL_PRIORITY, 0, 1);
+            //this.soundPool.play(this.soundLeftForwardId, 1, 1, NORMAL_PRIORITY, 0, 1);
         }
         else if(content_id == 6){
             _tvContentTop.setText("Hard Left");
             _tvContentBottom.setText("Reverse");
             _ivContent.setImageResource(R.drawable.left_reverse);
-            this.soundPool.play(this.soundLeftReverseId, 1, 1, NORMAL_PRIORITY, 0, 1);
+            //this.soundPool.play(this.soundLeftReverseId, 1, 1, NORMAL_PRIORITY, 0, 1);
         }
         else if(content_id == 7){
             _tvContentTop.setText("Stop");
             _tvContentBottom.setText("");
             _ivContent.setImageResource(R.drawable.stop);
-            this.soundPool.play(this.soundStopId, 1, 1, NORMAL_PRIORITY, 0, 1);
+            //this.soundPool.play(this.soundStopId, 1, 1, NORMAL_PRIORITY, 0, 1);
         }
         else if(content_id == 8){
             _tvContentTop.setText("Parked");
@@ -483,7 +484,11 @@ public class SampleActivity extends Activity implements ICommNotify{
                 last_ts = intTimestamp;
                 if(stage > 0) {
                     int result = monitor(intSteering, intSpeed, intAcceleration, intGear, t_delta);
-                    updateView(result);
+                    if(result != last_content) {
+                        Log.d(_tag,String.format("Updating content from %d to %d", last_content,result));
+                        last_content = result;
+                        updateView(result);
+                    }
                 }
 			}
 		});
