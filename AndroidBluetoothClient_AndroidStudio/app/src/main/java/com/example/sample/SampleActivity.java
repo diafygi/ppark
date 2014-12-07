@@ -7,6 +7,7 @@ package com.example.sample;
 import java.nio.ByteBuffer;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.lang.Math;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
@@ -51,12 +52,20 @@ public class SampleActivity extends Activity implements ICommNotify{
     private int soundLeftForwardId;
     private int soundLeftReverseId;
 
-    boolean first_tap = false;
-    boolean second_tap = false;
-    int x1 = 0;
-    int y1 = 0;
-    int x2 = 0;
-    int y2 = 0;
+    private int stage = 0;
+    private double spaceSize = 0.0;
+    private double arcDist = 0.0;
+    private double offsetDist = 0.0;
+
+    /* defaults are scion FR-S */
+    private final double carLength = 4.27;
+    private final double wheelBase= 2.58;
+    private final double turningCircle = 5.4;
+    private final double frontOH = 0.7;
+    private final double carWidth = 1.78;
+    private final double alignDist = 0.7;
+    private final double minSpace = 5.94;
+    private final double turnCircum = 5.5*Math.PI/4;
 
 	/* declaration of Communication class */
 	private Communication _comm;
@@ -141,13 +150,13 @@ public class SampleActivity extends Activity implements ICommNotify{
 
     public void updateView() {
         //first tap screen
-        if((!first_tap) && (!second_tap)){
+        if(stage == 0){
             _tvContentTop.setText("Tap When");
             _tvContentBottom.setText("At First Bumper");
             _ivContent.setImageResource(R.drawable.first_tap);
         }
         //second tap screen
-        else if((first_tap) && (!second_tap)){
+        else if(stage == 1){
             _tvContentTop.setText("Tap Again When");
             _tvContentBottom.setText("At Second Bumper");
             _ivContent.setImageResource(R.drawable.second_tap);
@@ -157,7 +166,7 @@ public class SampleActivity extends Activity implements ICommNotify{
             _tvContentTop.setText("Default");
             _tvContentBottom.setText("Screen");
             _ivContent.setImageResource(R.drawable.ok);
-            this.soundPool.play(this.soundStopId, 1, 1, NORMAL_PRIORITY, 0, 1);
+            //this.soundPool.play(this.soundStopId, 1, 1, NORMAL_PRIORITY, 0, 1);
         }
     }
 
@@ -173,7 +182,6 @@ public class SampleActivity extends Activity implements ICommNotify{
                 if (!_comm.openSession(_strDevAddress)) {
                     showAlertDialog("OpenSession Failed");
                 }
-                ;
             } else if (btn == _btnDisconnect) {
                 stopTimer();
 				/* Close the session */
@@ -182,8 +190,7 @@ public class SampleActivity extends Activity implements ICommNotify{
                 Intent intent = new Intent(SampleActivity.this, DeviceListActivity.class);
                 startActivityForResult(intent, REQUEST_BTDEVICE_SELECT);
             } else if (btn == _btnStartOver) {
-                first_tap = false;
-                second_tap = false;
+                stage = 0;
                 updateView();
             }
         }
@@ -194,18 +201,77 @@ public class SampleActivity extends Activity implements ICommNotify{
         public void onClick(View v) {
             LinearLayout ll = (LinearLayout)v;
             if (ll == _llContent){
-                if(!first_tap){
-                    first_tap = true;
+                //first tap
+                if(stage == 0){
+                    stage = 1;
+                    spaceSize = 0.0;
                     updateView();
                 }
-                else if(!second_tap){
-                    second_tap = true;
-                    updateView();
+                //second tap
+                else if(stage == 1){
+                    //too small
+                    if(spaceSize < minSpace){
+                        stage = 0;
+                    }
+                    //enough room, go ahead and park
+                    else{
+                        stage = 2;
+                    }
                 }
             }
         }
     };
 
+    private int monitor (int steeringWheelAngle,
+                        int velocity,
+                        int acceleration,
+                        int gear,
+                        int deltaT) {
+        switch(stage) {
+            case 1: return measure(velocity, acceleration, gear, deltaT);
+            case 2: return align(velocity, acceleration, gear, deltaT);
+            case 3: return rightLock(steeringWheelAngle, velocity, acceleration, gear, deltaT);
+            case 4: return leftLock(steeringWheelAngle, velocity, acceleration, gear, deltaT);
+            default: stage = 0;
+                return 7;
+        }
+    }
+
+    private int measure(int velocity, int acceleration, int gear,int deltaT ){
+        spaceSize += (12 == gear)? -(velocity*deltaT*0.001+ 0.5*acceleration*deltaT*deltaT*0.0000001) : velocity*deltaT*0.001+ 0.5*acceleration*deltaT*deltaT*0.0000001;
+        return 1;
+    }
+
+    private int align (int velocity, int acceleration, int gear, int deltaT){
+        offsetDist += (12 == gear)? -(velocity*deltaT*0.001+ 0.5*acceleration*deltaT*deltaT*0.0000001) : velocity*deltaT*0.001+ 0.5*acceleration*deltaT*deltaT*0.0000001;
+        if (alignDist < offsetDist)
+            return 1;
+
+        if (alignDist > offsetDist){
+            offsetDist = 0.0;
+            stage = 3;
+            return 4;
+        }
+        return 1;
+    }
+
+    private int rightLock(int steeringAngle, int velocity, int acceleration, int gear, int deltaT){
+        arcDist += (12 == gear)? -(velocity*deltaT*0.001+ 0.5*acceleration*deltaT*deltaT*0.0000001) : velocity*deltaT*0.001+ 0.5*acceleration*deltaT*deltaT*0.0000001;
+        if (turnCircum < arcDist)
+            return 4;
+
+        stage = 4;
+        return 6;
+    }
+
+    private int leftLock(int steeringAngle, int velocity, int acceleration, int gear, int deltaT){
+        arcDist += (12 == gear)? (velocity*deltaT*0.001+ 0.5*acceleration*deltaT*deltaT*0.0000001) : -velocity*deltaT*0.001+ 0.5*acceleration*deltaT*deltaT*0.0000001;
+        if (arcDist > 0 )
+            return 6;
+
+        stage = 5;
+        return 8;
+    }
 
     @Override
 	public void notifyReceiveData(Object data) {
